@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fake News Detection</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            background-size: 200% 200%;
+            animation: gradientShift 15s ease infinite;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 25px;
+            box-shadow: 0 25px 70px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.3);
+            max-width: 800px;
+            width: 100%;
+            padding: 40px;
+        }
+
+        h1 {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+            font-weight: 700;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #5a5a5a;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+            font-weight: 500;
+        }
+
+        .input-section {
+            margin-bottom: 30px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 10px;
+            color: #4a5568;
+            font-weight: 600;
+            font-size: 1.1em;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 150px;
+            padding: 15px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 16px;
+            font-family: inherit;
+            resize: vertical;
+            transition: all 0.3s;
+            background: #f8f9fa;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+
+        button {
+            flex: 1;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .predict-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .predict-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.5);
+            background: linear-gradient(135deg, #7c8ff0 0%, #8a5fb8 50%, #f5a5ff 100%);
+        }
+
+        .predict-btn:active {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .clear-btn {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            color: #4a5568;
+            border: 2px solid #e2e8f0;
+        }
+
+        .clear-btn:hover {
+            background: linear-gradient(135deg, #e2e8f0 0%, #cbd5e0 100%);
+            border-color: #cbd5e0;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .result-section {
+            display: none;
+            margin-top: 30px;
+            padding: 20px;
+            border-radius: 10px;
+            animation: fadeIn 0.5s;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .result-section.show {
+            display: block;
+        }
+
+        .result-section.real {
+            background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+            border: 2px solid #28a745;
+            box-shadow: 0 4px 15px rgba(40, 167, 69, 0.2);
+        }
+
+        .result-section.fake {
+            background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+            border: 2px solid #dc3545;
+            box-shadow: 0 4px 15px rgba(220, 53, 69, 0.2);
+        }
+
+        .prediction-label {
+            font-size: 1.5em;
+            font-weight: bold;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .prediction-label.real {
+            color: #155724;
+            text-shadow: 0 2px 4px rgba(40, 167, 69, 0.2);
+        }
+
+        .prediction-label.fake {
+            color: #721c24;
+            text-shadow: 0 2px 4px rgba(220, 53, 69, 0.2);
+        }
+
+        .confidence-bar {
+            margin: 15px 0;
+        }
+
+        .confidence-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+            font-size: 0.9em;
+            color: #555;
+        }
+
+        .bar-container {
+            height: 25px;
+            background: #e0e0e0;
+            border-radius: 12px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .bar-fill {
+            height: 100%;
+            transition: width 0.5s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 0.85em;
+        }
+
+        .bar-fill.real {
+            background: linear-gradient(90deg, #28a745 0%, #20c997 100%);
+            box-shadow: 0 2px 8px rgba(40, 167, 69, 0.3);
+        }
+
+        .bar-fill.fake {
+            background: linear-gradient(90deg, #dc3545 0%, #e83e8c 100%);
+            box-shadow: 0 2px 8px rgba(220, 53, 69, 0.3);
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .loading.show {
+            display: block;
+        }
+
+        .spinner {
+            border: 4px solid rgba(102, 126, 234, 0.1);
+            border-top: 4px solid #667eea;
+            border-right: 4px solid #764ba2;
+            border-bottom: 4px solid #f093fb;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error {
+            background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+            border: 2px solid #dc3545;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 12px;
+            margin-top: 20px;
+            display: none;
+            box-shadow: 0 4px 12px rgba(220, 53, 69, 0.2);
+        }
+
+        .error.show {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Fake News Detection</h1>
+        <p class="subtitle">Analyze news articles to detect potential misinformation</p>
+
+        <div class="input-section">
+            <label for="newsText">Enter news article text:</label>
+            <textarea id="newsText" placeholder="Paste or type the news article you want to analyze here..."></textarea>
+        </div>
+
+        <div class="button-group">
+            <button class="predict-btn" onclick="predictNews()">Analyze Article</button>
+            <button class="clear-btn" onclick="clearInput()">Clear</button>
+        </div>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p style="margin-top: 10px;">Analyzing article...</p>
+        </div>
+
+        <div class="error" id="error"></div>
+
+        <div class="result-section" id="result">
+            <div class="prediction-label" id="predictionLabel"></div>
+            <div class="confidence-bar">
+                <div class="confidence-label">
+                    <span>Real News</span>
+                    <span id="realConfidence">0%</span>
+                </div>
+                <div class="bar-container">
+                    <div class="bar-fill real" id="realBar" style="width: 0%">0%</div>
+                </div>
+            </div>
+            <div class="confidence-bar">
+                <div class="confidence-label">
+                    <span>Fake News</span>
+                    <span id="fakeConfidence">0%</span>
+                </div>
+                <div class="bar-container">
+                    <div class="bar-fill fake" id="fakeBar" style="width: 0%">0%</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function predictNews() {
+            const text = document.getElementById('newsText').value.trim();
+            
+            if (!text) {
+                showError('Please enter some text to analyze.');
+                return;
+            }
+
+            // Hide previous results and errors
+            document.getElementById('result').classList.remove('show', 'real', 'fake');
+            document.getElementById('error').classList.remove('show');
+            
+            // Show loading
+            document.getElementById('loading').classList.add('show');
+
+            try {
+                const response = await fetch('/predict', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ text: text })
+                });
+
+                const data = await response.json();
+
+                // Hide loading
+                document.getElementById('loading').classList.remove('show');
+
+                if (!response.ok) {
+                    showError(data.error || 'An error occurred while analyzing the article.');
+                    return;
+                }
+
+                // Display results
+                const resultDiv = document.getElementById('result');
+                const predictionLabel = document.getElementById('predictionLabel');
+                
+                predictionLabel.textContent = `Prediction: ${data.prediction} News`;
+                predictionLabel.className = `prediction-label ${data.prediction.toLowerCase()}`;
+                
+                const realProb = (data.confidence.real * 100).toFixed(1);
+                const fakeProb = (data.confidence.fake * 100).toFixed(1);
+                
+                document.getElementById('realConfidence').textContent = `${realProb}%`;
+                document.getElementById('fakeConfidence').textContent = `${fakeProb}%`;
+                
+                document.getElementById('realBar').style.width = `${realProb}%`;
+                document.getElementById('realBar').textContent = `${realProb}%`;
+                
+                document.getElementById('fakeBar').style.width = `${fakeProb}%`;
+                document.getElementById('fakeBar').textContent = `${fakeProb}%`;
+                
+                resultDiv.classList.add('show', data.prediction.toLowerCase());
+                
+            } catch (error) {
+                document.getElementById('loading').classList.remove('show');
+                showError('Network error. Please make sure the server is running.');
+                console.error('Error:', error);
+            }
+        }
+
+        function clearInput() {
+            document.getElementById('newsText').value = '';
+            document.getElementById('result').classList.remove('show', 'real', 'fake');
+            document.getElementById('error').classList.remove('show');
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('error');
+            errorDiv.textContent = message;
+            errorDiv.classList.add('show');
+        }
+
+        // Allow Enter key to submit (Ctrl+Enter)
+        document.getElementById('newsText').addEventListener('keydown', function(e) {
+            if (e.ctrlKey && e.key === 'Enter') {
+                predictNews();
+            }
+        });
+    </script>
+</body>
+</html>
+
